@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  enrollments      Enrollment[]
+  attempts         AssessmentAttempt[]
+  codingSubmits    Submission[]
+  studentSkills    StudentSkill[]
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  instructorId String
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  modules     Module[]
+  enrollments Enrollment[]
+}
+
+model Module {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  title       String
+  content     String?
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id])
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Assessment {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  timerMode   String   // "OVERALL" | "QUESTION"
+  duration    Int      // in seconds
+  passScore   Int
+  questions   Question[]
+  attempts    AssessmentAttempt[]
+}
+
+model Question {
+  id           String   @id @default(uuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  text         String
+  options      String[]
+  correctIndex Int
+  timeLimit    Int?     // For question-level timer
+}
+
+model AssessmentAttempt {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  score        Int      @default(0)
+  status       String   // "IN_PROGRESS" | "COMPLETED" | "TIMEOUT" | "VIOLATION"
+  tabSwitches  Int      @default(0)
+  createdAt    DateTime @default(now())
+  endTime      DateTime?
+}
+
+model CodingProblem {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  difficulty  String
+  topic       String
+  testCases   TestCase[]
+  submissions Submission[]
+}
+
+model TestCase {
+  id        String   @id @default(uuid())
+  problemId String
+  problem   CodingProblem @relation(fields: [problemId], references: [id])
+  input     String
+  output    String
+  isHidden  Boolean  @default(false)
+}
+
+model Submission {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  problemId String
+  problem   CodingProblem @relation(fields: [problemId], references: [id])
+  code      String
+  language  String
+  status    String   // "PENDING" | "ACCEPTED" | "REJECTED" | "ERROR"
+  createdAt DateTime @default(now())
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  industry    String
+  description String
+  eligibility String?
+}
+
+model Skill {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  students    StudentSkill[]
+}
+
+model StudentSkill {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  skillId  String
+  skill    Skill  @relation(fields: [skillId], references: [id])
+  proficiency Int
+}
