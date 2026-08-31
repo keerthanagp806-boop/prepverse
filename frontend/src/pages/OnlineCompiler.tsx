@@ -24,6 +24,8 @@ import {
 export const OnlineCompiler: React.FC = () => {
   const [searchParams] = useSearchParams();
   const problemSlug = searchParams.get('problem');
+  // Restore all compiler functionality as requested (isQuestionOnly is false)
+  const isQuestionOnly = false;
 
   const [problems, setProblems] = useState<any[]>([]);
   const [selectedProblem, setSelectedProblem] = useState<any>(null);
@@ -203,62 +205,81 @@ export const OnlineCompiler: React.FC = () => {
             ))}
           </select>
 
-          <select
-            value={language}
-            onChange={(e) => handleLanguageChange(e.target.value as any)}
-            className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-bold text-indigo-300 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="python">Python 3</option>
-            <option value="cpp">C++ (GCC)</option>
-            <option value="java">Java 17</option>
-            <option value="javascript">JavaScript (Node.js)</option>
-          </select>
+          {!isQuestionOnly && (
+            <select
+              value={language}
+              onChange={(e) => handleLanguageChange(e.target.value as any)}
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-bold text-indigo-300 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="python">Python 3</option>
+              <option value="cpp">C++ (GCC)</option>
+              <option value="java">Java 17</option>
+              <option value="javascript">JavaScript (Node.js)</option>
+            </select>
+          )}
         </div>
       </div>
 
       {/* Main Split Interface */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[680px]">
-        {/* Left Column: Problem Description / Submissions (5 cols) */}
-        <div className="lg:col-span-5 rounded-3xl bg-slate-900/80 border border-slate-800 p-5 shadow-xl flex flex-col justify-between overflow-hidden">
-          {/* Tab buttons */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab('problem')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                  activeTab === 'problem'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Problem Description
-              </button>
-              <button
-                onClick={() => setActiveTab('submissions')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                  activeTab === 'submissions'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Submissions ({submissionsList.length})
-              </button>
-            </div>
+      <div className={`grid grid-cols-1 ${isQuestionOnly ? '' : 'lg:grid-cols-12'} gap-4 min-h-[680px]`}>
+        {/* Left Column: Problem Description / Submissions */}
+        <div className={`${isQuestionOnly ? '' : 'lg:col-span-5'} rounded-3xl bg-slate-900/80 border border-slate-800 p-5 shadow-xl flex flex-col justify-between overflow-hidden`}>
+          {/* Tab buttons - hidden in question-only mode */}
+          {!isQuestionOnly ? (
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('problem')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    activeTab === 'problem'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Problem Description
+                </button>
+                <button
+                  onClick={() => setActiveTab('submissions')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    activeTab === 'submissions'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Submissions ({submissionsList.length})
+                </button>
+              </div>
 
-            {selectedProblem && (
-              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${
-                selectedProblem.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-400' :
-                selectedProblem.difficulty === 'Medium' ? 'bg-amber-500/20 text-amber-400' :
-                'bg-rose-500/20 text-rose-400'
-              }`}>
-                {selectedProblem.difficulty}
-              </span>
-            )}
-          </div>
+              {selectedProblem && (
+                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${
+                  selectedProblem.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-400' :
+                  selectedProblem.difficulty === 'Medium' ? 'bg-amber-500/20 text-amber-400' :
+                  'bg-rose-500/20 text-rose-400'
+                }`}>
+                  {selectedProblem.difficulty}
+                </span>
+              )}
+            </div>
+          ) : (
+            selectedProblem && (
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">
+                  Question Description
+                </span>
+                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${
+                  selectedProblem.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-400' :
+                  selectedProblem.difficulty === 'Medium' ? 'bg-amber-500/20 text-amber-400' :
+                  'bg-rose-500/20 text-rose-400'
+                }`}>
+                  Difficulty: {selectedProblem.difficulty}
+                </span>
+              </div>
+            )
+          )}
 
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto pr-1 space-y-4 text-xs">
-            {activeTab === 'problem' && selectedProblem ? (
+            {((activeTab === 'problem' || isQuestionOnly) && selectedProblem) ? (
               <div className="space-y-4 text-slate-300">
                 <h2 className="text-base font-bold text-white">{selectedProblem.title}</h2>
                 <div className="text-[11px] text-slate-400 flex gap-4">
@@ -322,7 +343,8 @@ export const OnlineCompiler: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Code Editor & Output Console (7 cols) */}
+        {/* Right Column: Code Editor & Output Console (7 cols) — hidden in question-only mode */}
+        {!isQuestionOnly && (
         <div className="lg:col-span-7 flex flex-col space-y-4">
           {/* Monaco Editor Container */}
           <div className="rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl flex flex-col flex-1">
@@ -501,6 +523,7 @@ export const OnlineCompiler: React.FC = () => {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );
