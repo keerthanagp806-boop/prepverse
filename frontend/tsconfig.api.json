@@ -12,4 +12,5 @@
     "resolveJsonModule": true
   },
   "include": ["api/**/*"]
-}
+}//contributed by keerthana
+
